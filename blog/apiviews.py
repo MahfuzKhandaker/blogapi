@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework import status
@@ -7,9 +8,29 @@ from .models import Category, Post, Comment, Reply
 from .serializers import CategorySerializer, PostSerializer, CommentSerializer, ReplySerializer
 
 
+class CategoryListView(generics.ListAPIView):
+    queryset = Category.objects.all() 
+    serializer_class = CategorySerializer 
+
+class PostsInCategoryView(generics.ListAPIView): 
+    serializer_class = PostSerializer 
+    def get_queryset(self): 
+        pk = self.kwargs['pk'] 
+        return Post.objects.filter(category=pk) 
+
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
+    
+    def get_object(self):
+        queryset = self.get_queryset()
+        filter = {} 
+        filter['pk'] = self.kwargs['pk'] 
+        obj = get_object_or_404(queryset, **filter) 
+        print(obj.main_image)
+        obj.number_of_views +=1 
+        obj.save() 
+        return obj
 
 class CommentList(generics.ListCreateAPIView):
 
