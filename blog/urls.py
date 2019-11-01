@@ -1,18 +1,19 @@
-from django.urls import path
-from .apiviews import CategoryListView, PostsInCategoryView, CommentList, CreateReply
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .apiviews import PostViewSet
+from blog import apiviews
 
 router = DefaultRouter()
-router.register('posts', PostViewSet, base_name='posts')
+router.register('posts', apiviews.PostViewSet)
+router.register('comments', apiviews.CommentViewSet)
+router.register('replies', apiviews.ReplyViewSet)
+router.register('users', apiviews.UserViewSet )
 
 urlpatterns = [
-    # path('posts/', PostList.as_view(), name='post_list'),
-    # path('posts/<int:pk>/', PostDetail.as_view(), name='post_detail'),
-    path('posts/<int:pk>/comments/', CommentList.as_view(), name='comment_list'),
-    path('posts/<int:pk>/comments/<int:comment_pk>/replies/', CreateReply.as_view(), name='create_reply'),
-    path('categories/', CategoryListView.as_view(), name='category_list_view'),
-    path('category-filter/<int:pk>/', PostsInCategoryView.as_view(), name='Posts_in_category_view'),
+    path('', include(router.urls)),
+    path('rest-auth/', include('rest_auth.urls')),
+    path('rest-auth/registration/', include('rest_auth.registration.urls')),
+    path('categories', apiviews.CategoryListView.as_view(), name='categories-list'),
+    path('category-filter/<int:pk>/', apiviews.PostsInCategoryView.as_view(), name='category-detail')
 ]
 
-urlpatterns += router.urls
+# urlpatterns += router.urls

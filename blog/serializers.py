@@ -1,35 +1,51 @@
 from rest_framework import serializers
 from .models import Category, Post, Comment, Reply
-import re
-class CategorySerializer(serializers.ModelSerializer):
+from django.contrib.auth.models import User
+
+class CategorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ('id', 'url', 'name')
 
-class ReplySerializer(serializers.ModelSerializer):
+class ReplySerializer(serializers.HyperlinkedModelSerializer):
+    reply_by = serializers.ReadOnlyField(source='reply_by.username')
     class Meta:
         model = Reply
-        fields = '__all__'
+        fields = ('id', 'url', 'reply_by', 'reply_text', 'comment')
 
 
-class CommentSerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.HyperlinkedModelSerializer):
+    comment_by = serializers.ReadOnlyField(source='comment_by.username')
     replies = ReplySerializer(many= True, required=False)
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = ( 'id', 'url','comment_by', 'comment_text', 'post', 'replies')
 
 
-class PostSerializer(serializers.ModelSerializer):
-    main_image = serializers.SerializerMethodField('get_profile_pic_url')
+class PostSerializer(serializers.HyperlinkedModelSerializer):
     comments = CommentSerializer(many= True, required=False)
     class Meta:
         model = Post
-        fields = '__all__'
+        fields = ( 
+                  'id',
+                  'url',
+                  'title',
+                  'author',
+                  'body',
+                  'publish_date', 
+                  'category', 
+                  'main_image', 
+                  'number_of_views', 
+                  'number_of_likes', 
+                  'comments',
+                  )
 
-    def get_profile_pic_url(self, obj):
-        request = self.context.get('request')
-        return (re.sub('/([-\w])+/media/media/','/media/media/', request.build_absolute_uri(obj.main_image.url), 1))
+
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    comments = serializers.PrimaryKeyRelatedField(many=True, queryset=Comment.objects.all())
+    replies = serializers.PrimaryKeyRelatedField(many=True, queryset=Reply.objects.all())
 
 
-
-
+    class Meta:
+        model = User
+        fields = ['id', 'url', 'username', 'email', 'comments', 'replies']
